@@ -1,4 +1,3 @@
--- lua/genie/init.lua
 local M = {}
 
 local PROMPT = [[INSTRUCTION:
@@ -26,77 +25,131 @@ local function generate_context_string()
   local nvim_version = vim.version()
   local os_name = vim.loop.os_uname().sysname
   local term = os.getenv("TERM")
-  local current_time = os.date("%Y-%m-%d %H:%M:%S")
 
   local editor_version_string = string.format(
     "nvim v%s.%s.%s", nvim_version.major, nvim_version.minor, nvim_version.patch)
 
-  local term_string = term
-
-  return string.format("EDITOR='%s', OS='%s', TERM='%s', DATETIME='%s'",
-    editor_version_string, os_name, term_string, current_time)
+  return string.format("EDITOR='%s', KERNEL='%s', TERM='%s'",
+    editor_version_string, os_name, term)
 end
 
-local function request_to_openai(prompt)
-  local curl = require('plenary.curl')
-  local openai_api_key = os.getenv('OPENAI_API_KEY') -- Load API key from environment variable
+-- Configuration options, with defaults
+local config = {
+  model = 'gpt-4',
+  temperature = 0,
+  access_key = os.getenv('OPENAI_API_KEY') -- Default access key from environment variable
+}
+
+function M.config(user_config)
+  config = vim.tbl_deep_extend("force", config, user_config)
+end
+
+function M.get_config()
+  return config
+end
+
+function M.ai(prompt)
+  local openai_api_key = config.access_key -- Use the access key from the configuration
 
   if not openai_api_key then
-    error('The environment variable OPENAI_API_KEY is not set.')
+    error('The access key is not set in the configuration.')
   end
 
-  local response = curl.post('https://api.openai.com/v1/chat/completions', {
-    headers = {
-      ['Content-Type'] = 'application/json',
-      ['Authorization'] = 'Bearer ' .. openai_api_key -- Use the loaded API key
-    },
-    body = vim.fn.json_encode({
-      model = "gpt-3.5-turbo",
-      messages = {
-        {
-          role = "user",
-          content = prompt
-        }
+  -- Couldn't use plenary curl because it doesn't support timeout override.
+
+  local data = vim.fn.json_encode({
+    model = config.model, -- Use the model from the configuration
+    temperature = config.temperature,
+    messages = {
+      {
+        role = "user",
+        content = prompt
       }
-    })
+    }
   })
 
-  if response.status == 200 then
-    local result = vim.fn.json_decode(response.body)
-    return result.choices[1].message.content
+  local command = string.format(
+    "curl -sS -f -X POST " ..
+    "https://api.openai.com/v1/chat/completions " ..
+    "-H 'Content-Type: application/json' " ..
+    "-H 'Authorization: Bearer %s' " ..
+    "--max-time 180 --retry 5 --retry-delay 3 " ..
+    "-d '%s'",
+    openai_api_key, data:gsub("'", "'\"'\"'")
+  )
+
+  local handle = io.popen(command, 'r')
+  local result = handle:read('*a')
+  local success = handle:close()
+
+  if not success then
+    error('Failed to execute curl command.')
+  end
+
+  if not result:match("^{") then
+    error('Curl did not return a valid body: ' .. result)
+  end
+
+  local response = vim.fn.json_decode(result)
+  if response.error then
+    error(string.format('Failed to get response from OpenAI: %s', response.error.message))
   else
-    error('Failed to get response from OpenAI: ' .. response.status)
+    return response.choices[1].message.content
   end
 end
 
 local function execute_lua_code(lua_code_str)
-  assert(type(lua_code_str) == "string", "Expected a string")
-  local func, syntax_error = load(lua_code_str)
+  if type(lua_code_str) ~= "string" then
+    error("Input must be a string")
+  end
+  local func, syntaxError = loadstring(lua_code_str)
   if not func then
-    error("Syntax error in lua code: " .. syntax_error)
+    error("There was a syntax error: " .. syntaxError)
   end
-  local success, runtime_error = pcall(func)
-  if not success then
-    error("Runtime error in lua code: " .. runtime_error)
-  end
+  return func()
 end
 
-function M.setup()
+function M.generate_code(action)
+  local context  = generate_context_string()
+  local prompt   = generate_prompt(context, action)
+  local result   = M.ai(prompt)
+  -- convert local lua string variable "result" into an array
+  local result_array = {}
+  for substring in result:gmatch("%S+") do
+      table.insert(result_array, substring)
+  end
+
+  -- Remove first item in array if it starts with ```
+  if result_array[1]:sub(1, 3) == "```" then
+      table.remove(result_array, 1)
+  end
+
+  -- Remove last item in array if it starts with ```
+  if result_array[#result_array]:sub(1, 3) == "```" then
+      table.remove(result_array)
+  end
+  -- convert back into a string
+  result = table.concat(result_array, " ")
+
+  return result
+end
+
+function M.wish(string)
+  local response = M.generate_code(string)
+  execute_lua_code(response)
+end
+
+function M.setup(setup_config)
+  setup_config = setup_config or {}
+  M.config(setup_config)
   vim.api.nvim_create_user_command('Wish', function(args)
-    local context = generate_context_string()
-    local action = args.args
-    local prompt = generate_prompt(context, action)
-    local response = request_to_openai(prompt)
-    execute_lua_code(response)
+    M.wish(args.args)
   end, { nargs = "*" })
 end
 
-return M
+-- leak internals for testing purposes
+function M.leak()
+  M.execute_lua_code = execute_lua_code
+end
 
---[[TODO:
-1. Error handling could be improved by providing more detailed messages or handling specific error cases more gracefully.
-2. The plugin assumes the presence of the 'plenary.curl' module without checking if it's installed, which could lead to runtime errors if the module is missing.
-3. The plugin uses global functions `ai(prompt_string)` and `text_to_speech(text, language)` without defining them, which might cause errors if they are not defined elsewhere in the user's environment.
-4. The plugin does not sanitize the action input, which could potentially lead to the execution of unintended code if the input is not properly validated.
-5. The plugin does not provide any feedback to the user about the status of the request or the execution of the Lua code, which could be improved by adding print statements or other forms of user feedback.
---]]
+return M
