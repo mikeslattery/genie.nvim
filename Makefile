@@ -9,7 +9,7 @@ MODEL = gpt-4-1106-preview
 
 all: README.md test/.last
 
-.PHONY: all test manual helptags continous
+.PHONY: all test manual helptags continous helpdoc
 
 # Test target
 test: test/.last
@@ -38,6 +38,10 @@ helptags:
 		--headless \
 		-c "helptags doc" \
 		-c "qa!"
+
+# Don't depenency check because we don't want to automate
+helpdoc:
+	@doc/gendoc.sh
 
 README.md: doc/genie.txt Makefile
 	@openai api chat.completions.create -m $(MODEL) -g user \
