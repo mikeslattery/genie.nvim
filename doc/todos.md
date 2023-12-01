@@ -6,6 +6,11 @@
 * Cache w/disable
 * Retry with regeneration
 
+## Prompt Improvements
+
+* List of installed lazy.nvim plugins
+* List of configuration files
+
 ## Preview
 
 ```vim

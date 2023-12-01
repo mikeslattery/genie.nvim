@@ -2,11 +2,10 @@ local M = {}
 
 local PROMPT = [[INSTRUCTION:
 Generate Lua code for Neovim to perform the ACTION to run with the `:luafile` command.
-This code will run immediately, so do not generate functions or command.
-Do not require any plugins, except treesitter.nvim.
+This code will run immediately, so do not generate functions or commands unless requested.
+Do not require any plugins, except treesitter.nvim, plenary.nvim, and popup.nvim.
 Only generate the raw Lua code, excluding any markdown enclosure.
-There is a global function called `ai(prompt_string)` which can be called to ask GPT questions.
-There is a global function called `text_to_speech(text, language)`.
+There is a function `require('genie').ai(prompt_string)` which can be called to ask GPT questions.
 
 CONTEXT:
 %s

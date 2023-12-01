@@ -1,75 +1,118 @@
-==============================================================================
-CONTENTS                                                       *genie-contents*
-
-    1. Introduction               |genie-introduction|
-    2. Installation               |genie-installation|
-    3. Configuration              |genie-configuration|
-    4. Usage                      |genie-usage|
-    5. Commands                   |genie-commands|
-    6. Functions                  |genie-functions|
+*genie.txt*    Genie Neovim Plugin Help 
 
 ==============================================================================
-INTRODUCTION                                               *genie-introduction*
-
-Genie is a Neovim plugin that uses OpenAI's GPT-4 model to generate Lua code
-based on a given action. The generated code can be executed immediately in
-Neovim.
+CONTENTS                                                         *genie-contents*
+  
+  1. Introduction          |genie-introduction|
+  2. Installation          |genie-installation|
+  3. Usage                 |genie-usage|
+  4. Configuration         |genie-configuration|
+  5. Commands              |genie-commands|
+  6. Functions             |genie-functions|
+  7. Testing               |genie-testing|
+  8. License               |genie-license|
 
 ==============================================================================
-INSTALLATION                                             *genie-installation*
+1. INTRODUCTION                                                        *genie-introduction*
 
-To install the Genie plugin, use your preferred Neovim plugin manager. For
-example, if you are using vim-plug, add the following line to your init.vim
-file:
+Genie is a Neovim plugin that allows users to generate Lua code based on
+natural language instructions, using the power of GPT-based AI models. With
+Genie, you can perform actions within Neovim by simply providing natural
+language descriptions of what you wish to accomplish.
+
+==============================================================================
+2. INSTALLATION                                                        *genie-installation*
+
+To install Genie, you can use either the vim-plug or lazy.nvim package manager.
+
+Using vim-plug, add the following to your `init.vim` or `init.lua`:
 
     Plug 'mikeslattery/genie'
 
-Then, run the following command in Neovim:
+And then run `:PlugInstall` in Neovim.
 
-    :PlugInstall
+For lazy.nvim, include Genie in your configuration like this:
 
-==============================================================================
-CONFIGURATION                                           *genie-configuration*
+    {
+      "mikeslattery/genie",
+    }
 
-To configure the Genie plugin, you can use the `genie.config()` function in
-your init.vim file. Here is an example:
-
-    lua require('genie').config({model = 'gpt-4-1106-preview'})
-
-The available configuration options are:
-
-    model: The model to use for the OpenAI API. Default is 'gpt-4'.
-    temperature: The temperature for the OpenAI API. Default is 0.
-    access_key: The access key for the OpenAI API. Default is the value of the
-                OPENAI_API_KEY environment variable.
+Refer to the lazy.nvim documentation for more details on using this package manager.
 
 ==============================================================================
-USAGE                                                         *genie-usage*
+3. USAGE                                                               *genie-usage*
 
-To use the Genie plugin, you can use the `:Wish` command followed by the action
-you want to perform. For example:
+To use Genie, you should have an OpenAI API key set in your environment
+variables. Once installed and configured, you can use the `:Wish` command
+followed by a natural language instruction to execute Lua code in Neovim.
 
+Example:
     :Wish Open a new tab.
 
-This will generate and execute the Lua code to open a new tab in Neovim.
+This command will generate Lua code aimed at opening a new tab and execute it
+immediately.
 
 ==============================================================================
-COMMANDS                                                     *genie-commands*
+4. CONFIGURATION                                                   *genie-configuration*
 
-:Wish {action}    Generate and execute the Lua code for the given action.
+Genie can be configured by passing a table with desired configurations to the
+`setup` function. Configuration options include the AI model to use and the
+temperature setting for responses.
+
+Example in Lua:
+
+    local genie = require('genie')
+    genie.setup({
+        model = 'gpt-4',
+        temperature = 0.7,
+        access_key = 'your_openai_api_key'
+    })
+
+The `access_key` is optional if you already have it as an environment variable.
 
 ==============================================================================
-FUNCTIONS                                                   *genie-functions*
+5. COMMANDS                                                          *genie-commands*
 
-genie.config({config})    Set the configuration for the Genie plugin.
+Commands included in Genie are listed below:
 
-genie.ai(prompt)          Get the response from the OpenAI API for the given
-                          prompt.
-
-genie.generate_code(action)   Generate the Lua code for the given action.
-
-genie.wish(action)        Generate and execute the Lua code for the given
-                          action.
+  * |:Wish|:
+    - Executes code generated by AI based on natural language input.
 
 ==============================================================================
-vim:tw=78:ts=8:noet:ft=help:norl:
+6. FUNCTIONS                                                         *genie-functions*
+
+The notable functions in the Genie plugin:
+
+  * `ai(prompt_string)`:
+    - Contacts OpenAI with the given prompt and returns the result.
+
+  * `generate_code(action)`:
+    - Generates Lua code based on the given action described in natural language.
+
+  * `wish(instruction)`:
+    - Takes a natural language instruction, generates Lua code, and executes it.
+
+  * `setup(config)`:
+    - Configures Genie with the given settings.
+
+==============================================================================
+7. TESTING                                                            *genie-testing*
+
+Testing is facilitated by Plenary test runner. Refer to `test/genie_spec.lua`
+for example tests and how to execute them.
+
+==============================================================================
+8. LICENSE                                                           *genie-license*
+
+Genie is distributed under the Apache License, Version 2.0. See the LICENSE file 
+in the GitHub repository for more details: https://github.com/mikeslattery/genie.nvim
+
+Copyright (c) 2023 Mike Slattery
+
+This is free software; you can redistribute it and/or modify it under the
+terms of the Apache 2.0 License. This program is distributed in the hope
+that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+==============================================================================
+vim:tw=78:ts=8:ft=help:norl:
