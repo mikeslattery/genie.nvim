@@ -35,7 +35,7 @@ prompt() {
   done
   echo ''
   echo "The current date is $(date)."
-  echo "The repo is at https://github.com/$USERNAME/${NAME}.nvim"
+  echo "The ${NAME} plugin repo is at https://github.com/$USERNAME/${NAME}.nvim"
   echo ''
   echo 'INSTRUCTION:'
   echo "Generate doc/${NAME}.txt for $NAME plugin, in raw vim help file format."

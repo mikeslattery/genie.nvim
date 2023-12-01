@@ -6,15 +6,15 @@ NVIM = nvim
 TEST_DIR = ./test
 PLUGINS_DIR = ./test/plenary
 MODEL = gpt-4-1106-preview
--include .env
-
-PROMPT="\
+PROMPT = "\
 	INSTRUCTION:\
 	Convert the above vim plugin help file to direct *raw* markdown.\
 	Do not generate a table of contents.\
 	Have an empty line after markdown headers.\
 	Only generate the raw markdown, not any enclosure or commentary.\
 	"
+
+-include .env
 
 all: test/.last README.md
 
