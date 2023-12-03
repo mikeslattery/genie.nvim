@@ -1,14 +1,20 @@
 local M = {}
 
 local PROMPT = [[INSTRUCTION:
-Generate Lua code for Neovim to perform the ACTION to run with the `:luafile` command.
+Generate LUA CODE for Neovim to perform the ACTION to run with the `:luafile` command.
 This code will run immediately, so do not generate functions or commands unless requested.
-Do not require any plugins, except treesitter.nvim, plenary.nvim, and popup.nvim.
-Only generate the raw Lua code, excluding any markdown enclosure.
-There is a function `require('genie').ai(prompt_string)` which can be called to ask GPT questions.
+Do not require any plugins, except treesitter.nvim.
+Only generate the raw Lua code, without surrounding commentary or enclosing markdown code block.
+Function `require('genie').ai(prompt_string)` which can be called to ask GPT questions.
 
 CONTEXT:
 %s
+
+ACTION:
+Create new tab.
+
+LUA CODE:
+vim.cmd('tabnew')
 
 ACTION:
 %s
@@ -72,7 +78,7 @@ function M.ai(prompt)
     "https://api.openai.com/v1/chat/completions " ..
     "-H 'Content-Type: application/json' " ..
     "-H 'Authorization: Bearer %s' " ..
-    "--max-time 180 --retry 5 --retry-delay 3 " ..
+    "--max-time 120 --retry 3 --retry-delay 3 " ..
     "-d '%s'",
     openai_api_key, data:gsub("'", "'\"'\"'")
   )
@@ -144,11 +150,21 @@ function M.setup(setup_config)
   vim.api.nvim_create_user_command('Wish', function(args)
     M.wish(args.args)
   end, { nargs = "*" })
+  return M
 end
 
 -- leak internals for testing purposes
+-- Do not include in documentation.
 function M.leak()
   M.execute_lua_code = execute_lua_code
+  return M
+end
+
+-- Force reload of plugin.  Useful during development.
+-- Do not include in documentation.
+function M.reload()
+  package.loaded['genie'] = nil
+  return require('genie').setup(config)
 end
 
 return M

@@ -30,7 +30,7 @@ prompt() {
   echo ''
 
   echo "These files are for a Neovim plugin called ${NAME}:"
-  for file in $(git ls-files | grep -E '.\.(lua|vim)$'); do
+  for file in $(git ls-files | grep -E '.\.(lua|vim|txt)$'); do
     mdfile "$file"
   done
   echo ''

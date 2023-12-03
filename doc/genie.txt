@@ -98,7 +98,7 @@ The notable functions in the Genie plugin:
 ==============================================================================
 7. TESTING                                                            *genie-testing*
 
-Testing is facilitated by Plenary test runner. Refer to `test/genie_spec.lua`
+Testing is facilitated by `make` and Plenary test runner. Refer to `test/genie_spec.lua`
 for example tests and how to execute them.
 
 ==============================================================================
