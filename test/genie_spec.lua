@@ -8,20 +8,20 @@ describe('Genie plugin', function()
 
   before_each(function()
     genie.leak()
-    genie.setup({ model = MODEL })
+    genie.setup({ model = MODEL, temperature = 0 })
   end)
 
   it('should set the configuration', function()
-    assert.are.same(MODEL, genie.get_config().model)
+    assert.are.same(MODEL, genie.config({}).model)
 
     local user_config = {
       model = 'gpt-3.5-turbo'
     }
     genie.config(user_config)
 
-    assert.are.same(user_config.model, genie.get_config().model)
-    assert(genie.get_config().access_key ~= nil, 'Key cannot be nil')
-    assert.are.same(0, genie.get_config().temperature)
+    assert.are.same(user_config.model, genie.config({}).model)
+    assert(genie.config({}).access_key ~= nil, 'Key cannot be nil')
+    assert.are.same(0, genie.config({}).temperature)
 
     -- Revert
     genie.config({ model = MODEL })

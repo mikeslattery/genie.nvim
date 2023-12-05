@@ -45,11 +45,9 @@ local config = {
   access_key = os.getenv('OPENAI_API_KEY') -- Default access key from environment variable
 }
 
+-- write and read configuration.
 function M.config(user_config)
   config = vim.tbl_deep_extend("force", config, user_config)
-end
-
-function M.get_config()
   return config
 end
 
