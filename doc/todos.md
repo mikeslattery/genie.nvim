@@ -27,28 +27,29 @@
 * List of installed lazy.nvim plugins
 * List of configuration files
 
-## Wish commands
-
-These have been tried and appear to work.
-Btw, just because these worked for me, doesn't mean they'll always work in the future.
-
-```vim
-" Arbitrary questions simply return a GPT-4 answer
-:Wish Close all windows except current one
-:Wish Close all buffers except current one
-:Wish Close all *.lua buffers
-:Wish Get length of longest line in current buffer. Set current window width to that length plus 9.
-:Wish Create vertical split and make it current window. Edit README.md in prior buffer.
-:Wish What is our our current location?  You can use `curl` to determine.
-:Wish How tall is Mount Everest?
-:Wish Send keys 'echo hello' to the tmux pane to the right of current one. Do not use plenary.
-```
-
 ## Untested Wish Commands
 
 ```vim
 :Wish install vim-fugative plugin using vim-plug.  Modify plugin list in ~/.config/nvim/init.lua
 :Wish What is the most popular neovim plugin on github?  You can use plenary's curl().  Plenary plugin and `c url` are both installed.
+
+" AI use within AI, because not all context is known at code-gen time.
+" I told it that there's an ai(prompt) function it can use.
+:Wish Save buffer in ./tests/ and use AI for filename based on buffer contents.
+
+" Save your commands to your permanent config
+" In my internal prompt, I told it how to edit ~/.config/nvim/
+:Wish Map <leader>w in nvim config file for last :Wish command
+
+" For ultimate meta-programming, it can modify its behavior.
+" In my internal prompt, I tell it how to fetch, rewrite, and save its own code
+:Wish Modify wish() to never cache
+:Wish Change AI prompt used by wish() to include local IP address
+:Wish Change AI prompt used by wish() to be aware of global text_to_speech(text) function.
+
+" Session management
+:Wish If exists, load Session.vim and shada.main from ./.nvim/
+:Wish On VimLeave,FocusLost save Session.vim and main.shada to ./.nvim/
 ```
 
 ## Preview
