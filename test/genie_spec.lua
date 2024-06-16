@@ -32,7 +32,7 @@ describe('Genie plugin', function()
   end)
 
   it('generate code', function()
-    local answer = genie.generate_code("Open a new tab.")
+    local _, answer = genie.generate_code("Open a new tab.")
     assert.are.same("vim.cmd('tabnew')", answer)
   end)
 
