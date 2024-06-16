@@ -45,7 +45,7 @@ Example in Lua:
 
     local genie = require('genie')
     genie.setup({
-        model = 'gpt-4',
+        model = 'gpt-4-0125-preview',
         temperature = 0.7,
         access_key = 'your_openai_api_key'
     })
@@ -90,7 +90,7 @@ for example tests and how to execute them.
 
 # 8. LICENSE
 
-Genie is distributed under the Apache License, Version 2.0. See the LICENSE file 
+Genie is distributed under the Apache License, Version 2.0. See the LICENSE file
 in the GitHub repository for more details: https://github.com/mikeslattery/genie.nvim
 
 Copyright (c) 2023 Mike Slattery

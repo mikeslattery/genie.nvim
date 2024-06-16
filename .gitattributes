@@ -1,0 +1,9 @@
+# See also .editorconfig
+
+# end_of_line
+* text=auto eol=lf
+# charset
+* text working-tree-encoding=UTF-8
+# trim_trailing_whitespace insert_final_newline
+* whitespace=fix
+

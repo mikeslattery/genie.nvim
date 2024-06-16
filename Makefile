@@ -1,11 +1,11 @@
 # Makefile for a Neovim plugin.
 
 # Variables
-NAME = genie
+NAME = $(shell git remote get-url origin | sed 's/.*\/\([^\/]*\)\.git/\1/; s/^n\?vim-//; s/\.n\?vim$$//;')
 NVIM = nvim
 TEST_DIR = ./test
 PLUGINS_DIR = ./test/plenary
-MODEL = gpt-4-1106-preview
+MODEL = gpt-4o
 PROMPT = "\
 	INSTRUCTION:\
 	Convert the above vim plugin help file to direct *raw* markdown.\
@@ -43,12 +43,12 @@ helptags:
 		-c "helptags doc" \
 		-c "qa!"
 
-# doc/$(NAME).txt: lua/$(NAME)/init.lua lua test/$(NAME)_spec.lua lua
+# doc/$(NAME).txt: lua/$(NAME)/init.lua lua test/$(NAME)_spec.lua doc/examples.vim
 # Not depenency checking because we don't want it automated
 helpdoc:
-	@doc/gendoc.sh "$(NAME)"
+	@doc/gendoc.sh
 
-README.md: doc/$(NAME).txt Makefile
+README.md: doc/$(NAME).txt
 	@openai api chat.completions.create -m "$(MODEL)" \
 		-g user "`cat doc/$(NAME).txt` `echo $(PROMPT)`" \
 		> README.md

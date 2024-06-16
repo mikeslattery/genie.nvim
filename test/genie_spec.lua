@@ -2,9 +2,8 @@ local genie = require('genie')
 
 describe('Genie plugin', function()
   -- This test is run by plenary
-  
-  -- Using a cheaper model for testing.
-  MODEL = 'gpt-4-1106-preview'
+
+  MODEL = 'gpt-4o'
 
   before_each(function()
     genie.leak()
@@ -15,7 +14,7 @@ describe('Genie plugin', function()
     assert.are.same(MODEL, genie.config({}).model)
 
     local user_config = {
-      model = 'gpt-3.5-turbo'
+      model = MODEL
     }
     genie.config(user_config)
 
