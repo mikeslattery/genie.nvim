@@ -8,7 +8,8 @@ Only generate the raw Lua code, without surrounding commentary or enclosing mark
 Function `require('genie').ai(prompt_string)` can be called to ask GPT questions
 and it returns a string.
 
-CONTEXT: %s
+CONTEXT:
+%s
 
 ACTION:
 Create new tab.
@@ -27,17 +28,18 @@ local function generate_prompt(context, action)
 end
 
 local function get_lazy_plugins()
-    local status, lazy = pcall(require, 'lazy')
-    if not status then
-        return {}
-    end
-    local plugins = lazy.get_plugins()
+  local status, lazy = pcall(require, 'lazy')
+  if not status then
+    return {}
+  end
+  local plugins = lazy.plugins()
 
-    local plugin_names = {}
-    for _, plugin in ipairs(plugins) do
-        table.insert(plugin_names, plugin.name)
-    end
-    return plugin_names
+  local plugin_names = {}
+  for _, plugin in ipairs(plugins) do
+    table.insert(plugin_names, plugin.name)
+  end
+
+  return plugin_names
 end
 
 local function get_plug_plugins()
@@ -50,40 +52,41 @@ local function get_plug_plugins()
 end
 
 local function get_packer_plugins()
-    local status, packer = pcall(require, 'packer') -- Load the packer module safely
-    if not status then
-        return {} -- Return empty list if packer isn't installed
-    end
+  local status, packer = pcall(require, 'packer') -- Load the packer module safely
+  if not status then
+    return {}                                     -- Return empty list if packer isn't installed
+  end
 
-    local packer_plugins = packer.plugin_names() -- Get the list of plugin names
-    local plugin_list = {}
+  local packer_plugins = packer.plugin_names() -- Get the list of plugin names
+  local plugin_list = {}
 
-    for _, plugin_name in ipairs(packer_plugins) do
-        table.insert(plugin_list, plugin_name)
-    end
+  for _, plugin_name in ipairs(packer_plugins) do
+    table.insert(plugin_list, plugin_name)
+  end
 
-    return plugin_list
+  return plugin_list
 end
 
+-- Returns the plugin manager name, such as lazy.nvim, vim-plug, packer.nvim, mini.deps, dein.vim
 local function get_package_manager()
-    if vim.g['plugs'] then
-        return 'vim-plug'
-    elseif vim.fn.exists('g:dein#install#_installed') == 1 then
-        return 'dein.vim'
-    elseif vim.fn.exists('g:packer_plugins') == 1 then
-        return 'packer.nvim'
-    elseif vim.fn.exists('g:lazy#loaded') == 1 then
-        return 'lazy.nvim'
-    elseif vim.fn.exists('g:mini#deps#loaded') == 1 then
-        return 'mini.deps'
-    else
-        return 'unknown'
-    end
+  if vim.g['plugs'] then
+    return 'vim-plug'
+  elseif vim.fn.exists('g:dein#install#_installed') == 1 then
+    return 'dein.vim'
+  elseif vim.fn.exists('g:packer_plugins') == 1 then
+    return 'packer.nvim'
+  elseif vim.fn.exists('g:lazy_did_setup') == 1 then
+    return 'lazy.nvim'
+  elseif vim.fn.exists('g:mini#deps#loaded') == 1 then
+    return 'mini.deps'
+  else
+    return 'unknown'
+  end
 end
-
 
 local function generate_context_string()
   local nvim_version = vim.version()
+  ---@diagnostic disable-next-line: undefined-field
   local os_name = vim.loop.os_uname().sysname
   local term = os.getenv("TERM")
 
@@ -97,38 +100,19 @@ local function generate_context_string()
 
   local package_manager = get_package_manager()
 
-  return string.format("EDITOR='%s', KERNEL='%s', TERM='%s'\nPackage manager = %s\n\nPLUGINS:\n%s",
-    editor_version_string, os_name, term, package_manager, plugin_list)
-end
-
-local function get_config_from_env_file()
-  local access_key = nil
-  local base_url = nil
-  local env_file = './.env'
-  local file = io.open(env_file, "r")
-  if file then
-    for line in file:lines() do
-      local key, value = line:match("([^=]+)=([^=]+)")
-      if key == "OPENAI_API_KEY" then
-        access_key = value
-      end
-      if key == "OPENAI_API_BASE" then
-        base_url = value
-      end
-    end
-    file:close()
-  end
-  return base_url, access_key
+  return string.format(
+    "EDITOR='%s', KERNEL='%s', TERM='%s'\nPackage manager = %s\n\nPLUGINS:\n%s",
+    editor_version_string, os_name, term, package_manager, plugin_list
+  )
 end
 
 -- Configuration options, with defaults
 local function init_config()
-  base_url, access_key = get_config_from_env_file()
   local config = {
-    model = 'gpt-4o',
+    model       = 'gpt-4o',
     temperature = 0,
-    base_url   = os.getenv('OPENAI_API_BASE') or base_url or 'https://api.openai.com/v1',
-    access_key = os.getenv('OPENAI_API_KEY') or access_key
+    base_url    = os.getenv('OPENAI_API_BASE') or 'https://api.openai.com/v1',
+    access_key  = os.getenv('OPENAI_API_KEY')
   }
 
   return config
@@ -144,6 +128,7 @@ end
 
 -- Send a prompt to OpenAI as a user message and return the assistant message.
 function M.ai(prompt)
+  local base_url = config.base_url
   local openai_api_key = config.access_key -- Use the access key from the configuration
 
   if not openai_api_key then
@@ -165,15 +150,18 @@ function M.ai(prompt)
 
   local command = string.format(
     "curl -sS -f -X POST " ..
-    "https://api.openai.com/v1/chat/completions " ..
+    "%s/chat/completions " ..
     "-H 'Content-Type: application/json' " ..
     "-H 'Authorization: Bearer %s' " ..
     "--max-time 120 --retry 3 --retry-delay 3 " ..
     "-d '%s'",
-    openai_api_key, data:gsub("'", "'\"'\"'")
+    base_url, openai_api_key, data:gsub("'", "'\"'\"'")
   )
 
   local handle = io.popen(command, 'r')
+  if not handle then
+    error('Failed to execute curl command.')
+  end
   local result = handle:read('*a')
   local success = handle:close()
 
@@ -181,9 +169,9 @@ function M.ai(prompt)
     error('Failed to execute curl command.')
   end
 
-  if not result:match("^{") then
-    error('Curl did not return a valid body: ' .. result)
-  end
+  -- if not result:match("^{") then
+  -- error('Curl did not return a valid body: ' .. result)
+  -- end
 
   local response = vim.fn.json_decode(result)
   if response.error then
@@ -205,25 +193,25 @@ local function execute_lua_code(lua_code_str)
 end
 
 function M.generate_code(action)
-  local context  = generate_context_string()
-  local prompt   = generate_prompt(context, action)
-  local result   = M.ai(prompt)
+  local context      = generate_context_string()
+  local prompt       = generate_prompt(context, action)
+  local result       = M.ai(prompt)
 
   -- Remove markdown code block encoding, if any.
   -- convert local lua string variable "result" into an array
   local result_array = {}
   for substring in result:gmatch("%S+") do
-      table.insert(result_array, substring)
+    table.insert(result_array, substring)
   end
 
   -- Remove first item in array if it starts with ```
   if result_array[1]:sub(1, 3) == "```" then
-      table.remove(result_array, 1)
+    table.remove(result_array, 1)
   end
 
   -- Remove last item in array if it starts with ```
   if result_array[#result_array]:sub(1, 3) == "```" then
-      table.remove(result_array)
+    table.remove(result_array)
   end
   -- convert back into a string
   result = table.concat(result_array, " ")
@@ -239,9 +227,13 @@ local function save_to_temp_file(wish, content)
 
   -- Save `content` string to temporary file in Neovim's cache directory.
   local file = io.open(temp_file_path, "w")
-  file:write('-' .. '-[[\n')
-  file:write(wish)
-  file:write('\n-' .. '-]]\n')
+  if not file then
+    error('Could not save to ' .. temp_file_path)
+  end
+  -- file:write('-' .. '-[[\n')
+  -- file:write(wish)
+  -- file:write('\n-' .. '-]]\n')
+  -- file:write('-' .. '- start\n')
   file:write(content)
   file:close()
 end
@@ -249,7 +241,11 @@ end
 function M.wish(string)
   local prompt, response = M.generate_code(string)
   save_to_temp_file(prompt, response)
-  execute_lua_code(response)
+  local result = execute_lua_code(response)
+  if result then
+    print(result)
+  end
+  return result
 end
 
 function M.setup(setup_config)
@@ -257,6 +253,7 @@ function M.setup(setup_config)
   M.config(setup_config)
   vim.api.nvim_create_user_command('Wish', function(args)
     M.wish(args.args)
+    vim.cmd.checktime()
   end, { nargs = "*" })
   return M
 end
