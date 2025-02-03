@@ -32,8 +32,9 @@ load_vars() {
   URL="$(get_http_url)"
   NAME="$(get_name)"
   if [[ -f .env ]]; then
+    set -a
     source .env
-    export OPENAI_API_KEY
+    set +a
   fi
 }
 

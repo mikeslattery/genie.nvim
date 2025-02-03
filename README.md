@@ -41,14 +41,17 @@ Genie can be configured by passing a table with desired configurations to the
 `setup` function. Configuration options include the AI model to use and the
 temperature setting for responses.
 
-Example in Lua:
+Default configuration:
 
-    local genie = require('genie')
-    genie.setup({
-        model = 'gpt-4-0125-preview',
-        temperature = 0.7,
-        access_key = 'your_openai_api_key'
-    })
+```lua
+require('genie').setup({
+  model       = 'gpt-4o',
+  temperature = 0,
+  base_url    = os.getenv('OPENAI_API_BASE') or 'https://api.openai.com/v1',
+  access_key  = os.getenv('OPENAI_API_KEY')
+})
+```
+
 
 The `access_key` is optional if you already have it as an environment variable.
 
